@@ -16,137 +16,142 @@ interface QuestionScreenProps {
   onConfirm: () => void;
 }
 
-const profileColors: Record<Profile, { color: string; rgb: string }> = {
-  agricultura: { color: '#3B6D11', rgb: '59,109,17' },
-  industria: { color: '#1A6B9A', rgb: '26,107,154' },
-  abastecimento: { color: '#BA7517', rgb: '186,117,23' },
+const profileColors: Record<Profile, string> = {
+  agricultura: '#3B6D11',
+  industria: '#1A6B9A',
+  abastecimento: '#BA7517',
 };
 
 const QuestionScreen = ({
-  question, stage, questionIndex, score, profile,
-  selectedOption, isAnswered, stageName, stageAnswers, onSelect, onConfirm,
+  question,
+  stage,
+  questionIndex,
+  score,
+  profile,
+  selectedOption,
+  isAnswered,
+  stageName,
+  stageAnswers,
+  onSelect,
+  onConfirm,
 }: QuestionScreenProps) => {
-  const theme = profileColors[profile];
+  const themeColor = profileColors[profile];
 
   const getOptionState = (optionId: string) => {
-    if (!isAnswered) return selectedOption === optionId ? 'selected' : 'normal';
+    if (!isAnswered) {
+      if (selectedOption === optionId) return 'selected';
+      return 'normal';
+    }
     if (optionId === question.correct) return 'correct';
     if (optionId === selectedOption && optionId !== question.correct) return 'wrong';
-    if (optionId !== question.correct) return 'dimmed';
     return 'normal';
   };
 
-  const optionStyleMap: Record<string, { bg: string; border: string; icon?: string; iconColor?: string }> = {
-    normal: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(133,193,212,0.18)' },
-    selected: { bg: `rgba(${theme.rgb},0.15)`, border: theme.color },
-    correct: { bg: 'rgba(59,109,17,0.2)', border: '#3B6D11', icon: '✓', iconColor: '#7BC443' },
-    wrong: { bg: 'rgba(153,60,29,0.15)', border: '#993C1D', icon: '✗', iconColor: '#E8735A' },
-    dimmed: { bg: 'rgba(255,255,255,0.03)', border: 'rgba(133,193,212,0.08)' },
+  const optionStyles: Record<string, { bg: string; border: string; icon?: string }> = {
+    normal: { bg: 'rgba(255,255,255,0.08)', border: 'rgba(133,193,212,0.25)' },
+    selected: { bg: `${themeColor}2E`, border: themeColor },
+    correct: { bg: 'rgba(59,109,17,0.25)', border: '#3B6D11', icon: '✓' },
+    wrong: { bg: 'rgba(153,60,29,0.20)', border: '#993C1D', icon: '✗' },
   };
 
   return (
     <motion.div
-      className="game-content !p-0"
+      className="absolute inset-0 flex flex-col z-10"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-3" style={{ background: 'rgba(0,0,0,0.15)' }}>
-        <div>
-          <span className="font-montserrat font-bold text-xs tracking-wider" style={{ color: '#85C1D4', letterSpacing: '0.08em' }}>
-            ETAPA {stage}/3
+      <div className="flex items-center justify-between px-12 pt-10 pb-4">
+        <span className="font-lato text-branco-nevoa" style={{ fontSize: '20px' }}>Guardiões</span>
+        <div className="text-center">
+          <span className="font-montserrat font-bold text-branco-nevoa" style={{ fontSize: '18px' }}>
+            Etapa {stage} de 3 — {stageName}
           </span>
-          <p className="font-lato text-sm" style={{ color: '#F0F7FC', opacity: 0.8 }}>{stageName}</p>
         </div>
-        <div className="text-right">
-          <span className="font-montserrat font-bold tabular-nums" style={{ fontSize: '22px', color: '#BA7517', textShadow: '0 0 10px rgba(186,117,23,0.3)' }}>
-            {score}
-          </span>
-          <span className="font-montserrat text-xs ml-1" style={{ color: '#BA7517', opacity: 0.7 }}>pts</span>
-        </div>
+        <span className="font-montserrat font-bold text-amber-ipe tabular-nums" style={{ fontSize: '28px' }}>
+          {score} pts
+        </span>
       </div>
 
       {/* Progress bar */}
-      <div className="flex gap-1.5 px-6 py-3">
+      <div className="flex gap-2 px-12 mb-6">
         {[0, 1, 2, 3, 4].map(i => {
-          const done = i < stageAnswers.length;
-          const current = i === questionIndex && !isAnswered;
-          const wasCorrect = done ? stageAnswers[i] : null;
+          const isDone = i < questionIndex || (i < stageAnswers.length);
+          const isCurrent = i === questionIndex;
           return (
-            <div key={i} className="flex-1 h-1.5 rounded-full relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  transformOrigin: 'left',
-                  background: done
-                    ? (wasCorrect ? '#3B6D11' : '#993C1D')
-                    : current ? theme.color : 'transparent',
-                  ...(current && !done ? { animation: 'pulse-glow 1.5s infinite' } : {}),
-                }}
-                initial={done ? { scaleX: 0 } : {}}
-                animate={done ? { scaleX: 1 } : {}}
-                transition={{ duration: 0.4 }}
-              />
-            </div>
+            <div
+              key={i}
+              className="flex-1 rounded-full"
+              style={{
+                height: '6px',
+                background: isDone
+                  ? themeColor
+                  : isCurrent
+                  ? themeColor
+                  : 'rgba(255,255,255,0.2)',
+                transition: 'background 400ms ease',
+                ...(isCurrent && !isAnswered ? { animation: 'pulse-glow 1.5s infinite' } : {}),
+              }}
+            />
           );
         })}
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-6">
-        <p className="font-montserrat text-xs tracking-wider mb-3 mt-1" style={{ color: '#85C1D4', opacity: 0.7 }}>
-          PERGUNTA {questionIndex + 1} DE 5
+      <div className="flex-1 overflow-y-auto no-scrollbar px-12 pb-12">
+        <p className="font-lato text-azul-claro mb-4" style={{ fontSize: '18px' }}>
+          Pergunta {questionIndex + 1} de 5
         </p>
 
         {/* Question card */}
-        <div className="glass-card-strong p-5 mb-5">
-          <p className="font-lato font-semibold leading-relaxed" style={{ fontSize: 'clamp(16px, 2.2vw, 26px)', color: '#F0F7FC', textWrap: 'balance' }}>
+        <div
+          className="glass-card mb-7"
+          style={{ padding: '28px 32px' }}
+        >
+          <p
+            className="font-lato font-semibold text-branco-nevoa leading-relaxed"
+            style={{ fontSize: 'clamp(22px, 2.4vw, 30px)', textWrap: 'balance' }}
+          >
             {question.text}
           </p>
         </div>
 
         {/* Options */}
-        <div className="flex flex-col gap-2.5">
-          {question.options.map((option, i) => {
-            const st = getOptionState(option.id);
-            const styles = optionStyleMap[st];
+        <div className="flex flex-col gap-3">
+          {question.options.map(option => {
+            const state = getOptionState(option.id);
+            const styles = optionStyles[state];
             return (
               <motion.button
                 key={option.id}
-                className="flex items-center gap-3 w-full text-left rounded-xl relative overflow-hidden group"
+                className="flex items-center gap-4 w-full text-left rounded-xl transition-all"
                 style={{
-                  minHeight: '56px',
-                  padding: '12px 16px',
+                  minHeight: '72px',
+                  padding: '16px 20px',
                   background: styles.bg,
-                  border: `${st === 'selected' || st === 'correct' || st === 'wrong' ? '2' : '1'}px solid ${styles.border}`,
+                  border: `${state === 'selected' || state === 'correct' || state === 'wrong' ? '2' : '1.5'}px solid ${styles.border}`,
                   cursor: isAnswered ? 'default' : 'pointer',
-                  transition: 'all 150ms ease',
-                  opacity: st === 'dimmed' ? 0.5 : 1,
                 }}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: st === 'dimmed' ? 0.5 : 1, x: 0 }}
-                transition={{ delay: i * 0.05, duration: 0.3 }}
-                whileHover={!isAnswered ? { background: 'rgba(255,255,255,0.10)', scale: 1.01 } : {}}
+                whileHover={!isAnswered ? { background: 'rgba(255,255,255,0.14)' } : {}}
                 whileTap={!isAnswered ? { scale: 0.98 } : {}}
                 onClick={() => !isAnswered && onSelect(option.id)}
               >
-                {/* Letter circle */}
                 <div
                   className="flex items-center justify-center flex-shrink-0 rounded-full font-montserrat font-bold"
                   style={{
-                    width: '32px', height: '32px',
-                    background: styles.icon ? (st === 'correct' ? 'rgba(59,109,17,0.3)' : 'rgba(153,60,29,0.3)') : `rgba(${theme.rgb},0.2)`,
-                    border: `1.5px solid ${styles.icon ? styles.iconColor : theme.color}`,
-                    fontSize: '14px',
-                    color: styles.icon ? styles.iconColor! : '#F0F7FC',
-                    transition: 'all 150ms ease',
+                    width: '36px',
+                    height: '36px',
+                    background: `${themeColor}4D`,
+                    border: `1.5px solid ${themeColor}`,
+                    fontSize: '16px',
+                    color: '#F0F7FC',
                   }}
                 >
                   {styles.icon || option.id}
                 </div>
-                <span className="font-lato" style={{ fontSize: 'clamp(13px, 1.8vw, 20px)', color: st === 'dimmed' ? '#85C1D4' : '#E6F1FB', lineHeight: 1.4 }}>
+                <span className="font-lato" style={{ fontSize: 'clamp(18px, 2vw, 24px)', color: '#E6F1FB' }}>
                   {option.text}
                 </span>
               </motion.button>
@@ -158,17 +163,12 @@ const QuestionScreen = ({
         <AnimatePresence>
           {selectedOption && !isAnswered && (
             <motion.button
-              className="w-full font-montserrat font-bold rounded-2xl mt-5 relative overflow-hidden group"
-              style={{
-                height: '56px', fontSize: 'clamp(15px, 2vw, 20px)', color: '#F0F7FC',
-                background: `linear-gradient(135deg, ${theme.color}, ${theme.color}CC)`,
-                boxShadow: `0 4px 20px rgba(${theme.rgb},0.3), inset 0 1px 0 rgba(255,255,255,0.15)`,
-              }}
-              initial={{ opacity: 0, y: 10 }}
+              className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-6"
+              style={{ height: '72px', fontSize: '22px', background: themeColor }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
+              exit={{ opacity: 0, y: 8 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onConfirm}
             >
               CONFIRMAR RESPOSTA

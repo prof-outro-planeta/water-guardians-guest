@@ -7,160 +7,136 @@ interface AchievementScreenProps {
   onContinue: () => void;
 }
 
+const sealConfigs: Record<number, { gradient: [string, string]; label: string; textColor: string; glow: string }> = {
+  1: { gradient: ['#CD7F32', '#A0522D'], label: 'Bronze', textColor: '#FAEEDA', glow: 'rgba(205,127,50,0.3)' },
+  2: { gradient: ['#C0C0C0', '#A8A9AD'], label: 'Prata', textColor: '#F0F7FC', glow: 'rgba(192,192,192,0.3)' },
+  3: { gradient: ['#FFD700', '#FFA500'], label: 'Ouro', textColor: '#412402', glow: 'rgba(255,215,0,0.4)' },
+};
+
 const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProps) => {
   const sealName = getSealName(stage, profile);
-
-  const sealConfig = {
-    1: {
-      gradient: ['#CD7F32', '#A0522D'],
-      label: 'Bronze',
-      textColor: '#FAEEDA',
-    },
-    2: {
-      gradient: ['#C0C0C0', '#A8A9AD'],
-      label: 'Prata',
-      textColor: '#F0F7FC',
-    },
-    3: {
-      gradient: ['#FFD700', '#FFA500'],
-      label: 'Ouro',
-      textColor: '#412402',
-    },
-  }[stage] || { gradient: ['#CD7F32', '#A0522D'], label: 'Bronze', textColor: '#FAEEDA' };
+  const config = sealConfigs[stage] || sealConfigs[1];
 
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center z-10"
-      style={{ padding: '48px' }}
+      className="game-content items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.5 }}
     >
-      <h2 className="font-playfair font-bold text-branco-nevoa text-center" style={{ fontSize: '36px' }}>
-        Conquista Desbloqueada!
-      </h2>
-
-      {/* Seal */}
+      {/* Flash celebration overlay */}
       <motion.div
-        className="relative mt-12 flex items-center justify-center"
-        style={{ width: '200px', height: '200px' }}
-        initial={{ scale: 0, rotate: -10 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
+        className="fixed inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.15, 0.05] }}
+        transition={{ duration: 1.5 }}
+        style={{ background: `radial-gradient(circle, ${config.glow} 0%, transparent 70%)`, pointerEvents: 'none', zIndex: 5 }}
+      />
+
+      <motion.h2
+        className="font-playfair font-bold text-center relative z-10"
+        style={{ fontSize: 'clamp(24px, 4vw, 36px)', color: '#F0F7FC' }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
       >
-        <svg width="200" height="200" viewBox="0 0 200 200">
+        Conquista Desbloqueada!
+      </motion.h2>
+
+      {/* Seal with glow */}
+      <motion.div
+        className="relative mt-8 flex items-center justify-center"
+        style={{ width: '180px', height: '180px' }}
+        initial={{ scale: 0, rotate: -15 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', damping: 10, stiffness: 120, delay: 0.4 }}
+      >
+        {/* Glow ring */}
+        <div className="absolute inset-0 rounded-full" style={{ background: `radial-gradient(circle, ${config.glow} 0%, transparent 65%)`, filter: 'blur(15px)', transform: 'scale(1.4)' }} />
+        {/* Spinning ring */}
+        <div className="absolute inset-0 rounded-full" style={{ border: `2px solid ${config.gradient[0]}30`, animation: 'sealSpin 20s linear infinite' }} />
+
+        <svg width="180" height="180" viewBox="0 0 180 180" className="relative">
           <defs>
-            <linearGradient id={`seal-grad-${stage}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor={sealConfig.gradient[0]} />
-              <stop offset="100%" stopColor={sealConfig.gradient[1]} />
+            <linearGradient id={`seal-g-${stage}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={config.gradient[0]} />
+              <stop offset="100%" stopColor={config.gradient[1]} />
             </linearGradient>
-            <linearGradient id="shimmer-grad">
-              <stop offset="0%" stopColor="transparent" />
-              <stop offset="50%" stopColor="rgba(255,255,255,0.4)" />
-              <stop offset="100%" stopColor="transparent" />
-              <animate attributeName="x1" from="-100%" to="100%" dur="2s" repeatCount="indefinite" />
-              <animate attributeName="x2" from="0%" to="200%" dur="2s" repeatCount="indefinite" />
-            </linearGradient>
+            <filter id="seal-shadow">
+              <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor={config.gradient[1]} floodOpacity="0.3"/>
+            </filter>
           </defs>
-          {/* Outer ring */}
-          <circle cx="100" cy="100" r="92" fill="none" stroke={sealConfig.gradient[0]} strokeWidth="3" opacity="0.4" />
-          {/* Main circle */}
-          <circle cx="100" cy="100" r="85" fill={`url(#seal-grad-${stage})`} />
-          {/* Shimmer overlay */}
-          <circle cx="100" cy="100" r="85" fill="url(#shimmer-grad)" opacity="0.3" />
-          {/* Water drop icon */}
-          <path
-            d="M100 55C100 55 80 80 80 95C80 106 89 115 100 115C111 115 120 106 120 95C120 80 100 55 100 55Z"
-            fill={sealConfig.textColor}
-            opacity="0.9"
-          />
-          {/* Star for stage 1, Crown for stage 3 */}
-          {stage === 1 && (
-            <path
-              d="M100 65L103 75L113 75L105 81L108 91L100 85L92 91L95 81L87 75L97 75Z"
-              fill={sealConfig.gradient[1]}
-              opacity="0.6"
-            />
-          )}
-          {stage === 3 && (
-            <path
-              d="M85 52L90 42L95 50L100 38L105 50L110 42L115 52Z"
-              fill={sealConfig.textColor}
-              opacity="0.8"
-            />
-          )}
+          <circle cx="90" cy="90" r="82" fill="none" stroke={config.gradient[0]} strokeWidth="1.5" opacity="0.3" />
+          <circle cx="90" cy="90" r="75" fill={`url(#seal-g-${stage})`} filter="url(#seal-shadow)" />
+          {/* Inner highlight */}
+          <circle cx="90" cy="90" r="75" fill="url(#seal-g-${stage})" opacity="0.1" />
+          <ellipse cx="75" cy="65" rx="30" ry="20" fill="rgba(255,255,255,0.15)" transform="rotate(-20 75 65)" />
+          {/* Water drop */}
+          <path d="M90 50C90 50 72 72 72 84C72 93.9 80.1 102 90 102C99.9 102 108 93.9 108 84C108 72 90 50 90 50Z" fill={config.textColor} opacity="0.85"/>
+          {stage === 3 && <path d="M76 46L82 36L86 44L90 32L94 44L98 36L104 46" fill={config.textColor} opacity="0.7" strokeLinejoin="round"/>}
         </svg>
       </motion.div>
 
       <motion.p
-        className="font-montserrat font-bold mt-4"
-        style={{ fontSize: '20px', color: sealConfig.gradient[0] }}
+        className="font-montserrat font-bold mt-4 relative z-10"
+        style={{ fontSize: '18px', color: config.gradient[0], textShadow: `0 0 10px ${config.glow}` }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
+        transition={{ delay: 0.9 }}
       >
-        Selo {sealConfig.label}
+        Selo {config.label}
       </motion.p>
 
       <motion.h3
-        className="font-playfair italic text-center mt-4"
-        style={{ fontSize: '28px', color: '#F0F7FC' }}
+        className="font-playfair italic text-center mt-3 relative z-10"
+        style={{ fontSize: 'clamp(20px, 3vw, 28px)', color: '#F0F7FC' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
+        transition={{ delay: 1.1 }}
       >
         {sealName}
       </motion.h3>
 
       <motion.p
-        className="font-lato text-azul-claro text-center mt-4"
-        style={{ fontSize: '18px' }}
+        className="font-lato text-center mt-3 max-w-sm relative z-10"
+        style={{ fontSize: 'clamp(13px, 1.6vw, 17px)', color: '#85C1D4', lineHeight: 1.5 }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.2 }}
+        transition={{ delay: 1.3 }}
       >
         Você demonstrou conhecimento sobre a gestão dos recursos hídricos!
       </motion.p>
 
       {/* Celebration particles */}
-      {[...Array(12)].map((_, i) => {
-        const angle = (i / 12) * Math.PI * 2;
-        const colors = ['#85C1D4', '#3B6D11', '#2A8FAD', '#BA7517'];
+      {[...Array(16)].map((_, i) => {
+        const angle = (i / 16) * Math.PI * 2;
+        const colors = ['#85C1D4', '#3B6D11', '#2A8FAD', '#BA7517', '#FFD700', config.gradient[0]];
+        const dist = 80 + Math.random() * 100;
         return (
           <motion.div
             key={i}
             className="absolute rounded-full"
-            style={{
-              width: '8px',
-              height: '8px',
-              background: colors[i % colors.length],
-              top: '50%',
-              left: '50%',
-            }}
+            style={{ width: `${4 + (i % 3) * 2}px`, height: `${4 + (i % 3) * 2}px`, background: colors[i % colors.length], top: '45%', left: '50%', zIndex: 6 }}
             initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-            animate={{
-              x: Math.cos(angle) * 150,
-              y: Math.sin(angle) * 150,
-              opacity: 0,
-              scale: 0,
-            }}
-            transition={{ delay: 0.5, duration: 1.5, ease: 'easeOut' }}
+            animate={{ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, opacity: 0, scale: 0 }}
+            transition={{ delay: 0.6 + Math.random() * 0.3, duration: 1.5 + Math.random(), ease: 'easeOut' }}
           />
         );
       })}
 
       <motion.button
-        className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-auto"
+        className="w-full font-montserrat font-bold rounded-2xl mt-auto relative z-10 overflow-hidden"
         style={{
-          height: '72px',
-          fontSize: '22px',
-          background: sealConfig.gradient[0],
+          height: '56px', fontSize: 'clamp(15px, 2vw, 20px)', color: '#F0F7FC',
+          background: `linear-gradient(135deg, ${config.gradient[0]}, ${config.gradient[1]})`,
+          boxShadow: `0 4px 20px ${config.glow}, inset 0 1px 0 rgba(255,255,255,0.2)`,
         }}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5 }}
-        whileTap={{ scale: 0.95 }}
+        transition={{ delay: 1.6 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.96 }}
         onClick={onContinue}
       >
         CONTINUAR

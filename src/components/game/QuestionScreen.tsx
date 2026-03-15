@@ -79,15 +79,15 @@ const QuestionScreen = ({
               <motion.div
                 className="absolute inset-0 rounded-full"
                 style={{
+                  transformOrigin: 'left',
                   background: done
                     ? (wasCorrect ? '#3B6D11' : '#993C1D')
                     : current ? theme.color : 'transparent',
-                  ...(current ? { animation: 'pulse-glow 1.5s infinite' } : {}),
+                  ...(current && !done ? { animation: 'pulse-glow 1.5s infinite' } : {}),
                 }}
                 initial={done ? { scaleX: 0 } : {}}
                 animate={done ? { scaleX: 1 } : {}}
                 transition={{ duration: 0.4 }}
-                style={{ transformOrigin: 'left', background: done ? (wasCorrect ? '#3B6D11' : '#993C1D') : current ? theme.color : 'transparent' }}
               />
             </div>
           );

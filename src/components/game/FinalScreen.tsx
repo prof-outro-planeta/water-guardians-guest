@@ -6,6 +6,7 @@ interface FinalScreenProps {
   usedHint: boolean;
   sealsEarned: string[];
   profile: Profile;
+  guestName?: string;
   onRestart: () => void;
 }
 
@@ -16,7 +17,7 @@ const levelConfig = {
   diamante: { gradient: ['#B9F2FF', '#4FC3F7'], label: 'Diamante' },
 };
 
-const FinalScreen = ({ score, usedHint, sealsEarned, profile, onRestart }: FinalScreenProps) => {
+const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onRestart }: FinalScreenProps) => {
   const level = getFinalLevel(score, usedHint);
   const config = levelConfig[level];
 
@@ -36,7 +37,7 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, onRestart }: Final
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        Parabéns, Guardião das Águas!
+        Parabéns{guestName ? `, ${guestName}` : ''}, Guardião das Águas!
       </motion.h1>
 
       {/* Total score */}

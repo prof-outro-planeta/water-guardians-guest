@@ -4,6 +4,7 @@ import { gameData, Question } from '@/data/questions';
 export type Profile = 'agricultura' | 'industria' | 'abastecimento';
 export type Screen =
   | 'splash'
+  | 'cadastro'
   | 'home'
   | 'rules'
   | 'question'
@@ -14,6 +15,9 @@ export type Screen =
 
 export interface GameState {
   screen: Screen;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
   profile: Profile | null;
   stage: 1 | 2 | 3;
   questionIndex: number;
@@ -40,6 +44,9 @@ const POINTS = {
 
 const initialState: GameState = {
   screen: 'splash',
+  guestName: '',
+  guestEmail: '',
+  guestPhone: '',
   profile: null,
   stage: 1,
   questionIndex: 0,
@@ -98,6 +105,15 @@ export function useGame() {
   }, [state]);
 
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }));
+  const setGuest = (guestName: string, guestEmail: string, guestPhone: string, profile: Profile) =>
+    setState(s => ({
+      ...s,
+      guestName: guestName.trim(),
+      guestEmail: guestEmail.trim(),
+      guestPhone: guestPhone.trim(),
+      profile,
+      screen: 'rules',
+    }));
   const setProfile = (profile: Profile) => setState(s => ({ ...s, profile, screen: 'rules' }));
   
   const selectOption = (optionId: string) => {
@@ -204,7 +220,8 @@ export function useGame() {
     }));
   };
 
-  const restartGame = () => setState(initialState);
+  const restartGame = () =>
+    setState({ ...initialState, screen: 'cadastro', guestName: '', guestEmail: '', guestPhone: '', profile: null });
 
   const getStageName = (stage: number) => {
     if (stage === 1) return 'Base Comum';
@@ -224,6 +241,7 @@ export function useGame() {
     getCurrentQuestion,
     getStageQuestions,
     setScreen,
+    setGuest,
     setProfile,
     selectOption,
     confirmAnswer,

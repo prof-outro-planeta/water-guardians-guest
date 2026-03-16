@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useGame } from '@/hooks/useGame';
 import WaterBackground from './WaterBackground';
 import SplashScreen from './SplashScreen';
+import CadastroScreen from './CadastroScreen';
 import HomeScreen from './HomeScreen';
 import RulesScreen from './RulesScreen';
 import QuestionScreen from './QuestionScreen';
@@ -17,6 +18,7 @@ const GameContainer = () => {
     state,
     getCurrentQuestion,
     setScreen,
+    setGuest,
     setProfile,
     selectOption,
     confirmAnswer,
@@ -28,15 +30,12 @@ const GameContainer = () => {
     getStageName,
   } = useGame();
 
-  // Scale totem to fit viewport
+  // Scale totem to fit viewport: use full width so it's easy to view on desktop
   useEffect(() => {
     const updateScale = () => {
       if (!containerRef.current) return;
-      const vh = window.innerHeight;
       const vw = window.innerWidth;
-      const scaleH = vh / 1920;
-      const scaleW = vw / 1080;
-      const scale = Math.min(scaleH, scaleW, 1);
+      const scale = vw / 1080;
       containerRef.current.style.setProperty('--totem-scale', String(scale));
       containerRef.current.style.transform = `scale(${scale})`;
       containerRef.current.style.transformOrigin = 'top center';
@@ -61,7 +60,14 @@ const GameContainer = () => {
 
         <AnimatePresence mode="wait">
           {state.screen === 'splash' && (
-            <SplashScreen key="splash" onComplete={() => setScreen('home')} />
+            <SplashScreen key="splash" onComplete={() => setScreen('cadastro')} />
+          )}
+
+          {state.screen === 'cadastro' && (
+            <CadastroScreen
+              key="cadastro"
+              onComplete={(name, email, phone, profile) => setGuest(name, email, phone, profile)}
+            />
           )}
 
           {state.screen === 'home' && (
@@ -73,7 +79,7 @@ const GameContainer = () => {
               key="rules"
               profile={state.profile}
               onStart={() => setScreen('question')}
-              onBack={() => setScreen('home')}
+              onBack={() => setScreen('cadastro')}
             />
           )}
 
@@ -137,6 +143,7 @@ const GameContainer = () => {
               usedHint={state.usedHint}
               sealsEarned={state.sealsEarned}
               profile={state.profile}
+              guestName={state.guestName || undefined}
               onRestart={restartGame}
             />
           )}

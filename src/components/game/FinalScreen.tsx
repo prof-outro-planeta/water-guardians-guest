@@ -153,38 +153,6 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
         </svg>
       </motion.div>
 
-      {/* QR Code placeholder */}
-      <motion.div
-        className="mt-6 flex flex-col items-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.2 }}
-      >
-        <div
-          className="rounded-xl flex items-center justify-center"
-          style={{ width: '160px', height: '160px', background: '#FFF', border: '1px solid rgba(133,193,212,0.3)' }}
-        >
-          <svg width="120" height="120" viewBox="0 0 120 120">
-            <rect x="10" y="10" width="30" height="30" fill="#0D3B5E" rx="4" />
-            <rect x="80" y="10" width="30" height="30" fill="#0D3B5E" rx="4" />
-            <rect x="10" y="80" width="30" height="30" fill="#0D3B5E" rx="4" />
-            <rect x="16" y="16" width="18" height="18" fill="#FFF" rx="2" />
-            <rect x="86" y="16" width="18" height="18" fill="#FFF" rx="2" />
-            <rect x="16" y="86" width="18" height="18" fill="#FFF" rx="2" />
-            <rect x="22" y="22" width="6" height="6" fill="#0D3B5E" />
-            <rect x="92" y="22" width="6" height="6" fill="#0D3B5E" />
-            <rect x="22" y="92" width="6" height="6" fill="#0D3B5E" />
-            <rect x="50" y="50" width="20" height="20" fill="#0D3B5E" rx="3" />
-            <rect x="50" y="10" width="6" height="6" fill="#0D3B5E" />
-            <rect x="60" y="20" width="6" height="6" fill="#0D3B5E" />
-            <rect x="50" y="30" width="6" height="6" fill="#0D3B5E" />
-          </svg>
-        </div>
-        <p className="font-lato text-azul-claro mt-3 text-center" style={{ fontSize: '16px' }}>
-          Escaneie para seu certificado digital
-        </p>
-      </motion.div>
-
       {/* Final message */}
       <motion.p
         className="font-lato italic text-azul-claro text-center mt-6"

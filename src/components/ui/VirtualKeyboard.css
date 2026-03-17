@@ -1,0 +1,81 @@
+/* Virtual keyboard — theme Water Guardians (totem/TV touch) */
+
+.virtual-keyboard-wrapper {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  padding: 16px;
+  background: linear-gradient(to top, hsl(206 76% 18% / 0.98), transparent);
+  backdrop-filter: blur(8px);
+}
+
+.virtual-keyboard-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.virtual-keyboard-close {
+  width: 100%;
+  margin-top: 12px;
+  min-height: 52px;
+  padding: 12px 24px;
+  font-size: 20px;
+  font-weight: 600;
+  color: hsl(204 57% 96%);
+  background: rgba(133, 193, 212, 0.25);
+  border: 1.5px solid rgba(133, 193, 212, 0.5);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.virtual-keyboard-close:hover {
+  background: rgba(133, 193, 212, 0.4);
+  border-color: rgba(133, 193, 212, 0.7);
+}
+
+.virtual-keyboard-close:focus-visible {
+  outline: 2px solid hsl(194 48% 68%);
+  outline-offset: 2px;
+}
+
+/* Override simple-keyboard default theme with project colors */
+.hg-theme-water-guardians.hg-theme-default {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(133, 193, 212, 0.3);
+  border-radius: 16px;
+  padding: 12px;
+  font-family: 'Lato', sans-serif;
+}
+
+.hg-theme-water-guardians .hg-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(133, 193, 212, 0.25);
+  border-radius: 10px;
+  color: hsl(204 57% 96%);
+  font-size: 18px;
+  min-height: 48px;
+  box-shadow: none;
+}
+
+.hg-theme-water-guardians .hg-button:hover,
+.hg-theme-water-guardians .hg-button.hg-activeButton {
+  background: rgba(133, 193, 212, 0.2);
+  border-color: rgba(133, 193, 212, 0.4);
+}
+
+.hg-theme-water-guardians .hg-button.hg-selectedButton {
+  background: rgba(133, 193, 212, 0.35);
+  color: hsl(204 57% 96%);
+}
+
+.hg-theme-water-guardians .hg-row {
+  margin-bottom: 8px;
+}
+
+.hg-theme-water-guardians .hg-row .hg-button-container,
+.hg-theme-water-guardians .hg-row .hg-button:not(:last-child) {
+  margin-right: 6px;
+}

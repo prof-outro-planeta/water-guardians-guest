@@ -2,12 +2,12 @@ import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { VirtualKeyboard } from '@/components/ui/VirtualKeyboard';
 import type { Profile } from '@/hooks/useGame';
 
 /*
  * TELA DE CADASTRO — TOTEM / TV TOUCH
- * Para uso em TV touch sem teclado físico: planejado teclado virtual on-screen
- * (abrir ao focar nos campos de texto). Ainda não implementado.
+ * Teclado virtual on-screen abre ao focar nos campos de texto (TV touch sem teclado físico).
  */
 
 // Proporções e fontes do formulário — ajuste aqui para totem/TV (telas grandes e touch)
@@ -39,17 +39,33 @@ interface CadastroScreenProps {
   onComplete: (name: string, email: string, phone: string, profile: Profile) => void;
 }
 
+type VirtualKeyboardField = 'name' | 'email' | 'phone' | null;
+
 const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [touched, setTouched] = useState(false);
+  const [keyboardField, setKeyboardField] = useState<VirtualKeyboardField>(null);
 
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setPhone(formatPhone(raw));
   }, []);
+
+  const handleVirtualKeyboardChange = useCallback(
+    (field: VirtualKeyboardField, value: string) => {
+      if (field === 'name') setName(value);
+      else if (field === 'email') setEmail(value);
+      else if (field === 'phone') setPhone(formatPhone(value));
+    },
+    []
+  );
+
+  const virtualKeyboardValue =
+    keyboardField === 'name' ? name : keyboardField === 'email' ? email : keyboardField === 'phone' ? phone : '';
+  const virtualKeyboardType = keyboardField === 'phone' ? 'numeric' : 'text';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +79,7 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
 
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center z-10 overflow-y-auto no-scrollbar"
+      className="absolute inset-0 flex flex-col items-center z-10 overflow-hidden"
       style={{ padding: '48px' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -98,10 +114,12 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="Seu nome"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onFocus={() => setKeyboardField('name')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoFocus
             autoComplete="name"
+            aria-label="Nome (teclado virtual ao tocar no totem)"
           />
           {touched && !name.trim() && (
             <p className="font-lato text-amber-500" style={{ fontSize: '18px' }}>
@@ -124,9 +142,11 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="seu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onFocus={() => setKeyboardField('email')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="email"
+            aria-label="E-mail (teclado virtual ao tocar no totem)"
           />
         </div>
 
@@ -144,10 +164,12 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="(62) 99999-9999"
             value={phone}
             onChange={handlePhoneChange}
+            onFocus={() => setKeyboardField('phone')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="tel"
             inputMode="numeric"
+            aria-label="Telefone (teclado virtual ao tocar no totem)"
           />
         </div>
 
@@ -218,6 +240,16 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
       <p className="font-lato text-azul-claro mt-auto opacity-60" style={{ fontSize: '16px' }}>
         Outorga das Águas do Cerrado — Goiás
       </p>
+
+      {keyboardField && (
+        <VirtualKeyboard
+          value={virtualKeyboardValue}
+          onChange={(value) => handleVirtualKeyboardChange(keyboardField, value)}
+          onClose={() => setKeyboardField(null)}
+          type={virtualKeyboardType}
+          maxLength={keyboardField === 'phone' ? 11 : undefined}
+        />
+      )}
     </motion.div>
   );
 };

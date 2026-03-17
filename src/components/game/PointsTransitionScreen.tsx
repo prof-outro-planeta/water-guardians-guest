@@ -6,20 +6,14 @@ import ScoreBucket from './ScoreBucket';
 const BUCKET_SCALE = 2.8;
 
 interface PointsTransitionScreenProps {
-  stageScore: number;
-  stageMaxScore: number;
+  /** Número de acertos na etapa atual (0–5). */
+  correctCount: number;
   stage: number;
   questionIndex: number;
   onComplete: () => void;
 }
 
-const PointsTransitionScreen = ({
-  stageScore,
-  stageMaxScore,
-  stage,
-  questionIndex,
-  onComplete,
-}: PointsTransitionScreenProps) => {
+const PointsTransitionScreen = ({ correctCount, stage, questionIndex, onComplete }: PointsTransitionScreenProps) => {
   const durationMs = getPointsTransitionDurationMs(questionIndex, stage);
   const [secondsLeft, setSecondsLeft] = useState(() => Math.ceil(durationMs / 1000));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -50,7 +44,10 @@ const PointsTransitionScreen = ({
     onComplete();
   };
 
-  const fillLevel = stageMaxScore > 0 ? Math.min(1, stageScore / stageMaxScore) : 0;
+  // Galão das etapas: enche em função do número de acertos (0–5),
+  // independente da pontuação em pontos ou bônus de sequência.
+  const MAX_QUESTIONS_PER_STAGE = 5;
+  const fillLevel = Math.min(1, Math.max(0, correctCount / MAX_QUESTIONS_PER_STAGE));
 
   const bucketWidth = 48;
   const bucketHeight = 64;

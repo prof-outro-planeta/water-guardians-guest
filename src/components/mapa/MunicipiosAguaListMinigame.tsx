@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { MUNICIPIOS_AGUA_LISTA, buscarMunicipioAgua } from '@/data/geography';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { VirtualKeyboard } from '@/components/ui/VirtualKeyboard';
 
 interface MunicipiosAguaListMinigameProps {
   onBack: () => void;
@@ -14,6 +15,7 @@ export default function MunicipiosAguaListMinigame({ onBack }: MunicipiosAguaLis
   const [found, setFound] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [message, setMessage] = useState<{ type: 'ok' | 'dup' | 'wrong'; text: string } | null>(null);
+  const [showKeyboard, setShowKeyboard] = useState(false);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -55,10 +57,11 @@ export default function MunicipiosAguaListMinigame({ onBack }: MunicipiosAguaLis
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onFocus={() => setShowKeyboard(true)}
           placeholder="Ex.: Águas Lindas de Goiás"
           className="font-lato bg-white/10 border-white/25 text-branco-nevoa placeholder:text-branco-nevoa/50 flex-1"
           autoComplete="off"
-          aria-label="Nome do município"
+          aria-label="Nome do município (teclado virtual ao tocar)"
         />
         <Button
           type="submit"
@@ -126,6 +129,15 @@ export default function MunicipiosAguaListMinigame({ onBack }: MunicipiosAguaLis
           Voltar ao menu
         </Button>
       </div>
+
+      {showKeyboard && (
+        <VirtualKeyboard
+          value={input}
+          onChange={setInput}
+          onClose={() => setShowKeyboard(false)}
+          type="text"
+        />
+      )}
     </div>
   );
 }

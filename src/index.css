@@ -72,7 +72,7 @@
   transform: scale(var(--totem-scale, 1));
 }
 
-/* Wrapper: full viewport, scroll when content is taller (desktop) */
+/* Wrapper: full viewport, scroll when content is taller (desktop); scrollbar oculta no totem */
 .totem-wrapper {
   display: flex;
   justify-content: center;
@@ -82,6 +82,11 @@
   overflow-x: hidden;
   overflow-y: auto;
   background: hsl(206 76% 14%);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.totem-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
 /* Font families */

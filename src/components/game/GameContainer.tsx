@@ -122,8 +122,7 @@ const GameContainer = () => {
           {state.screen === 'points-transition' && (
             <PointsTransitionScreen
               key="points-transition"
-              stageScore={state.stageScore}
-              stageMaxScore={getStageMaxScore(state.stage)}
+              correctCount={state.stageAnswers.filter(Boolean).length}
               stage={state.stage}
               questionIndex={state.questionIndex}
               onComplete={goToFeedback}

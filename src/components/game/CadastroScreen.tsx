@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { OnScreenKeyboard } from '@/components/ui/OnScreenKeyboard';
 import type { Profile } from '@/hooks/useGame';
 
 /*
@@ -38,12 +39,15 @@ interface CadastroScreenProps {
   onComplete: (name: string, email: string, phone: string, profile: Profile) => void;
 }
 
+type ActiveField = 'name' | 'email' | 'phone' | null;
+
 const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [touched, setTouched] = useState(false);
+  const [activeField, setActiveField] = useState<ActiveField>(null);
 
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -59,6 +63,31 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
   };
 
   const isValid = name.trim().length > 0 && profile !== null;
+
+  const showKeyboard = activeField !== null;
+  const rawPhoneDigits = phone.replace(/\D/g, '');
+
+  const keyboardValue =
+    activeField === 'name'
+      ? name
+      : activeField === 'email'
+        ? email
+        : activeField === 'phone'
+          ? rawPhoneDigits
+          : '';
+
+  const keyboardMode = activeField === 'phone' ? 'numeric' : 'text';
+
+  const handleKeyboardChange = (next: string) => {
+    if (!activeField) return;
+    if (activeField === 'name') {
+      setName(next);
+    } else if (activeField === 'email') {
+      setEmail(next);
+    } else if (activeField === 'phone') {
+      setPhone(formatPhone(next));
+    }
+  };
 
   return (
     <motion.div
@@ -98,6 +127,7 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="Seu nome"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onFocus={() => setActiveField('name')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -127,6 +157,7 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="seu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onFocus={() => setActiveField('email')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -151,6 +182,7 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             placeholder="(62) 99999-9999"
             value={phone}
             onChange={handlePhoneChange}
+            onFocus={() => setActiveField('phone')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -228,6 +260,27 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
       <p className="font-lato text-azul-claro mt-auto opacity-60" style={{ fontSize: '16px' }}>
         Outorga das Águas do Cerrado — Goiás
       </p>
+
+      <AnimatePresence>
+        {showKeyboard && (
+          <motion.div
+            key="onscreen-keyboard"
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'tween', duration: 0.25 }}
+            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50 }}
+          >
+            <OnScreenKeyboard
+              value={keyboardValue}
+              onChange={handleKeyboardChange}
+              onClose={() => setActiveField(null)}
+              mode={keyboardMode}
+              maxLength={activeField === 'phone' ? 11 : undefined}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

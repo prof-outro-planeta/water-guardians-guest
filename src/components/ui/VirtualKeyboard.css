@@ -8,6 +8,11 @@
   backdrop-filter: blur(8px);
 }
 
+.virtual-keyboard-wrapper button {
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+
 .virtual-keyboard-inner {
   max-width: 900px;
   margin: 0 auto;

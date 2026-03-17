@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { VirtualKeyboard } from '@/components/ui/VirtualKeyboard';
 import type { Profile } from '@/hooks/useGame';
 
 /*
@@ -39,36 +38,17 @@ interface CadastroScreenProps {
   onComplete: (name: string, email: string, phone: string, profile: Profile) => void;
 }
 
-type VirtualKeyboardField = 'name' | 'email' | 'phone' | null;
-
 const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [touched, setTouched] = useState(false);
-  const [keyboardField, setKeyboardField] = useState<VirtualKeyboardField>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-  const phoneInputRef = useRef<HTMLInputElement>(null);
 
   const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setPhone(formatPhone(raw));
   }, []);
-
-  const handleVirtualKeyboardChange = useCallback(
-    (field: VirtualKeyboardField, value: string) => {
-      if (field === 'name') setName(value);
-      else if (field === 'email') setEmail(value);
-      else if (field === 'phone') setPhone(formatPhone(value));
-    },
-    []
-  );
-
-  const virtualKeyboardValue =
-    keyboardField === 'name' ? name : keyboardField === 'email' ? email : keyboardField === 'phone' ? phone : '';
-  const virtualKeyboardType = keyboardField === 'phone' ? 'numeric' : 'text';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,43 +59,6 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
   };
 
   const isValid = name.trim().length > 0 && profile !== null;
-
-  // Previne salto da tela: trava scroll do body enquanto o teclado virtual está aberto
-  useEffect(() => {
-    if (!keyboardField) return;
-    const prevOverflow = document.body.style.overflow;
-    const prevScrollY = window.scrollY;
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.body.style.touchAction = '';
-      window.scrollTo(0, prevScrollY);
-    };
-  }, [keyboardField]);
-
-  // Só recoloca foco no campo ativo se o foco foi para fora dos inputs (ex.: teclado); não refoca ao trocar de campo
-  useEffect(() => {
-    if (!keyboardField) return;
-    const refMap = { name: nameInputRef, email: emailInputRef, phone: phoneInputRef } as const;
-    const allInputs = [nameInputRef.current, emailInputRef.current, phoneInputRef.current].filter(Boolean) as HTMLInputElement[];
-    const input = refMap[keyboardField].current;
-    if (!input) return;
-    const isAnotherFormField = (el: Element | null) => el && allInputs.includes(el as HTMLInputElement);
-    const refocus = () => {
-      const active = document.activeElement;
-      if (active === input) return;
-      if (isAnotherFormField(active)) return;
-      if (document.body.contains(input)) input.focus();
-    };
-    const t = setTimeout(refocus, 0);
-    const onBlur = () => setTimeout(refocus, 10);
-    input.addEventListener('blur', onBlur);
-    return () => {
-      clearTimeout(t);
-      input.removeEventListener('blur', onBlur);
-    };
-  }, [keyboardField]);
 
   return (
     <motion.div
@@ -149,14 +92,12 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             Nome *
           </Label>
           <Input
-            ref={nameInputRef}
             id="guest-name"
             name="guest_n"
             type="text"
             placeholder="Seu nome"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onFocus={() => setKeyboardField('name')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -180,14 +121,12 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             E-mail
           </Label>
           <Input
-            ref={emailInputRef}
             id="guest-email"
             name="guest_e"
             type="text"
             placeholder="seu@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            onFocus={() => setKeyboardField('email')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -206,14 +145,12 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             Telefone
           </Label>
           <Input
-            ref={phoneInputRef}
             id="guest-phone"
             name="guest_p"
             type="tel"
             placeholder="(62) 99999-9999"
             value={phone}
             onChange={handlePhoneChange}
-            onFocus={() => setKeyboardField('phone')}
             className="glass-card border border-[rgba(133,193,212,0.3)] bg-white/5 text-branco-nevoa placeholder:text-azul-claro/60 rounded-xl px-4"
             style={{ height: FORM_STYLES.inputHeight, fontSize: FORM_STYLES.inputFontSize }}
             autoComplete="off"
@@ -291,28 +228,6 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
       <p className="font-lato text-azul-claro mt-auto opacity-60" style={{ fontSize: '16px' }}>
         Outorga das Águas do Cerrado — Goiás
       </p>
-
-      <AnimatePresence>
-        {keyboardField && (
-          <motion.div
-            key="virtual-keyboard"
-            className="virtual-keyboard-overlay"
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'tween', duration: 0.25 }}
-            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50 }}
-          >
-            <VirtualKeyboard
-              value={virtualKeyboardValue}
-              onChange={(value) => handleVirtualKeyboardChange(keyboardField, value)}
-              onClose={() => setKeyboardField(null)}
-              type={virtualKeyboardType}
-              maxLength={keyboardField === 'phone' ? 11 : undefined}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

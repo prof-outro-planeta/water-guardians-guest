@@ -94,16 +94,19 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
     };
   }, [keyboardField]);
 
-  // Enquanto o teclado está aberto, mantém o foco no campo ativo (fallback se o clique roubar o foco)
+  // Só recoloca foco no campo ativo se o foco foi para fora dos inputs (ex.: teclado); não refoca ao trocar de campo
   useEffect(() => {
     if (!keyboardField) return;
     const refMap = { name: nameInputRef, email: emailInputRef, phone: phoneInputRef } as const;
+    const allInputs = [nameInputRef.current, emailInputRef.current, phoneInputRef.current].filter(Boolean) as HTMLInputElement[];
     const input = refMap[keyboardField].current;
     if (!input) return;
+    const isAnotherFormField = (el: Element | null) => el && allInputs.includes(el as HTMLInputElement);
     const refocus = () => {
-      if (document.activeElement !== input && document.body.contains(input)) {
-        input.focus();
-      }
+      const active = document.activeElement;
+      if (active === input) return;
+      if (isAnotherFormField(active)) return;
+      if (document.body.contains(input)) input.focus();
     };
     const t = setTimeout(refocus, 0);
     const onBlur = () => setTimeout(refocus, 10);

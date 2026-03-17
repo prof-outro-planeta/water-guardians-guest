@@ -126,6 +126,7 @@ const QuestionScreen = ({
   const themeColor = profileColors[profile];
   const questionCardRef = useRef<HTMLDivElement>(null);
   const scoreBucketRef = useRef<HTMLDivElement>(null);
+  const gallonTargetRef = useRef<HTMLDivElement>(null);
   const [animationRects, setAnimationRects] = useState<AnimationRects | null>(null);
   const [displayStageScoreForBucket, setDisplayStageScoreForBucket] = useState(stageScore);
   const hasTriggeredAnimationRef = useRef(false);
@@ -136,33 +137,33 @@ const QuestionScreen = ({
     isAnswered && lastAnswerCorrect === true && lastPointsEarned > 0;
   const dropsCount = getDropsCount(lastPointsEarned, lastStreakBonus);
 
+  // Medição com delay para o layout (totem scale) estar aplicado; alvo = centro do galão
   useEffect(() => {
     if (!shouldRunDrops || hasTriggeredAnimationRef.current) return;
     const card = questionCardRef.current;
-    const bucket = scoreBucketRef.current;
-    if (!card || !bucket) return;
+    const gallon = gallonTargetRef.current || scoreBucketRef.current;
+    if (!card || !gallon) return;
+
+    setDisplayStageScoreForBucket(stageScore - lastPointsEarned - lastStreakBonus);
 
     const readRects = () => {
       const cardRect = card.getBoundingClientRect();
-      const bucketRect = bucket.getBoundingClientRect();
-      setDisplayStageScoreForBucket(stageScore - lastPointsEarned - lastStreakBonus);
+      const gallonRect = gallon.getBoundingClientRect();
       setAnimationRects({
         from: {
           x: cardRect.left + cardRect.width / 2 - DROP_SIZE / 2,
           y: cardRect.top + cardRect.height / 2 - DROP_SIZE / 2,
         },
         to: {
-          x: bucketRect.left + bucketRect.width / 2 - DROP_SIZE / 2,
-          y: bucketRect.top + bucketRect.height / 2 - DROP_SIZE / 2,
+          x: gallonRect.left + gallonRect.width / 2 - DROP_SIZE / 2,
+          y: gallonRect.top + gallonRect.height / 2 - DROP_SIZE / 2,
         },
       });
       hasTriggeredAnimationRef.current = true;
     };
 
-    const t = requestAnimationFrame(() => {
-      requestAnimationFrame(readRects);
-    });
-    return () => cancelAnimationFrame(t);
+    const t = setTimeout(readRects, 120);
+    return () => clearTimeout(t);
   }, [shouldRunDrops, stageScore, lastPointsEarned, lastStreakBonus]);
 
   const visibleOptions = eliminatedOptionId
@@ -243,7 +244,7 @@ const QuestionScreen = ({
         </div>
         <div ref={scoreBucketRef} className="flex items-center gap-3">
           <GotaIcon hasLife={lives >= 1} />
-          <div className="flex flex-col items-end gap-0.5">
+          <div ref={gallonTargetRef} className="flex flex-col items-end gap-0.5">
             <span className="font-lato text-branco-nevoa/80" style={{ fontSize: '12px' }}>
               Etapa {stage}
             </span>

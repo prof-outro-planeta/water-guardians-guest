@@ -1,0 +1,11 @@
+{
+  "name": "Guardiões da Outorga das Águas do Cerrado",
+  "short_name": "Guardiões da Outorga",
+  "description": "Jogo educativo sobre outorga de recursos hídricos em Goiás.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0f2942",
+  "theme_color": "#0f2942",
+  "scope": "/"
+}

@@ -51,9 +51,17 @@
   * {
     @apply border-border;
   }
+  html {
+    /* Altura visível no totem (esconde barra do navegador da altura útil) */
+    min-height: 100dvh;
+    min-height: 100vh;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: 'Lato', sans-serif;
+    min-height: 100dvh;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }
 
@@ -77,6 +85,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  min-height: 100dvh;
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
@@ -87,6 +96,25 @@
 }
 .totem-wrapper::-webkit-scrollbar {
   display: none;
+}
+
+/* Totem retrato 1080×1920: ocupa toda a tela, sem barra de rolagem visível */
+@media (width: 1080px) and (height: 1920px),
+       (max-width: 1080px) and (orientation: portrait) and (max-height: 1920px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+  }
+  .totem-wrapper {
+    min-height: 100%;
+    height: 100dvh;
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+  }
 }
 
 /* Font families */

@@ -73,32 +73,30 @@ const ScoreBucket = forwardRef<HTMLDivElement, ScoreBucketProps>(
             strokeWidth={2}
           />
 
-          {/* Água: retângulo com altura = fillableH * fillLevel, encostado no fundo da área preenchível */}
-          {(waterHeightPx > 0 || animateFromZero) && (
-            <g clipPath={`url(#${clipId})`}>
-              <motion.rect
-                x={fillableX + 2}
-                y={waterTopY}
-                width={fillableW - 4}
-                height={waterHeightPx}
-                fill={`url(#${gradientId})`}
-                initial={
-                  animateFromZero
-                    ? { y: fillableY + fillableH, height: 0 }
-                    : false
-                }
-                animate={{
-                  y: waterTopY,
-                  height: waterHeightPx,
-                }}
-                transition={
-                  animateFromZero
-                    ? { type: 'spring' as const, damping: 20, stiffness: 100 }
-                    : { type: 'spring' as const, damping: 22, stiffness: 280 }
-                }
-              />
-            </g>
-          )}
+          {/* Água: sobe de baixo para cima; sempre renderiza o rect para a animação de preenchimento funcionar */}
+          <g clipPath={`url(#${clipId})`}>
+            <motion.rect
+              x={fillableX + 2}
+              y={waterTopY}
+              width={fillableW - 4}
+              height={Math.max(0, waterHeightPx)}
+              fill={`url(#${gradientId})`}
+              initial={
+                animateFromZero
+                  ? { y: fillableY + fillableH, height: 0 }
+                  : false
+              }
+              animate={{
+                y: waterTopY,
+                height: Math.max(0, waterHeightPx),
+              }}
+              transition={
+                animateFromZero
+                  ? { type: 'spring' as const, damping: 20, stiffness: 100 }
+                  : { type: 'spring' as const, damping: 18, stiffness: 120 }
+              }
+            />
+          </g>
 
           {/* Neck (top of gallon) */}
           <rect

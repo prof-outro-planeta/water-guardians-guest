@@ -60,8 +60,19 @@ export function VirtualKeyboard({
   const layout = type === 'numeric' ? LAYOUT_NUMERIC : LAYOUT_TEXT;
   const displayValue = type === 'numeric' ? value.replace(/\D/g, '') : value;
 
+  // Fase de captura: evita que o foco saia do campo ao tocar nas teclas (sem bloquear o clique)
+  const keepFieldFocus = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+  };
+
   return (
-    <div className="virtual-keyboard-wrapper" role="group" aria-label="Teclado virtual">
+    <div
+      className="virtual-keyboard-wrapper"
+      role="group"
+      aria-label="Teclado virtual"
+      onMouseDownCapture={keepFieldFocus}
+      onTouchStartCapture={keepFieldFocus}
+    >
       <div className="virtual-keyboard-inner">
         <Keyboard
           keyboardRef={(r) => {

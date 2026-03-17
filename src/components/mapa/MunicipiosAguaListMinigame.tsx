@@ -131,12 +131,14 @@ export default function MunicipiosAguaListMinigame({ onBack }: MunicipiosAguaLis
       </div>
 
       {showKeyboard && (
-        <VirtualKeyboard
-          value={input}
-          onChange={setInput}
-          onClose={() => setShowKeyboard(false)}
-          type="text"
-        />
+        <div className="fixed inset-x-0 bottom-0 z-50">
+          <VirtualKeyboard
+            value={input}
+            onChange={setInput}
+            onClose={() => setShowKeyboard(false)}
+            type="text"
+          />
+        </div>
       )}
     </div>
   );

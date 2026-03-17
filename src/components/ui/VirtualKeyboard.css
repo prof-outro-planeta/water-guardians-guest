@@ -1,11 +1,8 @@
 /* Virtual keyboard — theme Water Guardians (totem/TV touch) */
 
 .virtual-keyboard-wrapper {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
+  position: relative;
+  width: 100%;
   padding: 16px;
   background: linear-gradient(to top, hsl(206 76% 18% / 0.98), transparent);
   backdrop-filter: blur(8px);

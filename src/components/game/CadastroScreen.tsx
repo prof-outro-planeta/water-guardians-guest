@@ -269,7 +269,7 @@ const CadastroScreen = ({ onComplete }: CadastroScreenProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'tween', duration: 0.25 }}
-            style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50 }}
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 50 }}
           >
             <OnScreenKeyboard
               value={keyboardValue}

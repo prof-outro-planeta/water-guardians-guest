@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { gameData, Question, GameData } from '@/data/questions';
+import { gameData, Question } from '@/data/questions';
 
 export type Profile = 'agricultura' | 'industria' | 'abastecimento';
 export type Screen =
@@ -76,47 +76,6 @@ const initialState: GameState = {
   stageScore: 0,
 };
 
-// Diversifica a posição (letra) da alternativa correta ao longo das questões,
-// para evitar que quase todas sejam, por exemplo, a letra B.
-function diversifyQuestionOptions(q: Question, offsetSeed: number): Question {
-  const options = q.options;
-  const len = options.length;
-  if (len === 0) return q;
-  const letters = options.map((o) => o.id);
-  const correctIndex = options.findIndex((o) => o.id === q.correct);
-  if (correctIndex < 0) return q;
-  const offset = offsetSeed % len;
-  // Reatribui as letras às opções na mesma ordem, mas girando o índice.
-  const newOptions = options.map((opt, i) => ({
-    ...opt,
-    id: letters[(i + offset) % len],
-  }));
-  const newCorrect = letters[(correctIndex + offset) % len];
-  return {
-    ...q,
-    options: newOptions,
-    correct: newCorrect,
-  };
-}
-
-function diversifyStageQuestions(questions: Question[], stageSeed: number): Question[] {
-  return questions.map((q, index) => diversifyQuestionOptions(q, stageSeed + index));
-}
-
-const diversifiedGameData: GameData = {
-  stage1: diversifyStageQuestions(gameData.stage1, 1),
-  stage2: {
-    agricultura: diversifyStageQuestions(gameData.stage2.agricultura, 10),
-    industria: diversifyStageQuestions(gameData.stage2.industria, 20),
-    abastecimento: diversifyStageQuestions(gameData.stage2.abastecimento, 30),
-  },
-  stage3: {
-    agricultura: diversifyStageQuestions(gameData.stage3.agricultura, 40),
-    industria: diversifyStageQuestions(gameData.stage3.industria, 50),
-    abastecimento: diversifyStageQuestions(gameData.stage3.abastecimento, 60),
-  },
-};
-
 export function getFinalLevel(score: number, usedHint: boolean) {
   if (score >= 1000 && !usedHint) return 'diamante';
   if (score >= 1000) return 'ouro';
@@ -174,19 +133,19 @@ export function useGame() {
 
   const getCurrentQuestion = useCallback((): Question | null => {
     const { stage, questionIndex, profile } = state;
-    if (stage === 1) return diversifiedGameData.stage1[questionIndex] || null;
+    if (stage === 1) return gameData.stage1[questionIndex] || null;
     if (!profile) return null;
-    if (stage === 2) return diversifiedGameData.stage2[profile][questionIndex] || null;
-    if (stage === 3) return diversifiedGameData.stage3[profile][questionIndex] || null;
+    if (stage === 2) return gameData.stage2[profile][questionIndex] || null;
+    if (stage === 3) return gameData.stage3[profile][questionIndex] || null;
     return null;
   }, [state]);
 
   const getStageQuestions = useCallback((): Question[] => {
     const { stage, profile } = state;
-    if (stage === 1) return diversifiedGameData.stage1;
+    if (stage === 1) return gameData.stage1;
     if (!profile) return [];
-    if (stage === 2) return diversifiedGameData.stage2[profile];
-    if (stage === 3) return diversifiedGameData.stage3[profile];
+    if (stage === 2) return gameData.stage2[profile];
+    if (stage === 3) return gameData.stage3[profile];
     return [];
   }, [state]);
 

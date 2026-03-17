@@ -8,7 +8,9 @@ export type Screen =
   | 'home'
   | 'rules'
   | 'question'
+  | 'points-transition'
   | 'feedback'
+  | 'game-over'
   | 'stage-result'
   | 'achievement'
   | 'final';
@@ -32,6 +34,11 @@ export interface GameState {
   lastAnswerCorrect: boolean | null;
   lastPointsEarned: number;
   lastStreakBonus: number;
+  lives: number;
+  /** Option id that was wrong when player got game over; after recovery this option is hidden and question is worth half points. */
+  eliminatedOptionForRetry: string | null;
+  /** Points earned in the current stage only (for stage bucket). */
+  stageScore: number;
 }
 
 const POINTS = {
@@ -41,6 +48,9 @@ const POINTS = {
   streak3Bonus: 100,
   streak5Bonus: 200,
 };
+
+/** Pontos máximos de referência para encher o balde na tela de transição (5 perguntas × 250 pts estágio 3). */
+export const MAX_SCORE_FOR_BUCKET = 5 * POINTS.stage3Correct;
 
 const initialState: GameState = {
   screen: 'splash',
@@ -61,6 +71,9 @@ const initialState: GameState = {
   lastAnswerCorrect: null,
   lastPointsEarned: 0,
   lastStreakBonus: 0,
+  lives: 1,
+  eliminatedOptionForRetry: null,
+  stageScore: 0,
 };
 
 export function getFinalLevel(score: number, usedHint: boolean) {
@@ -81,6 +94,38 @@ export function getSealName(stage: number, profile: Profile | null): string {
     }
   }
   return 'Mestre da Outorga em Goiás';
+}
+
+/** Max points possible in a stage (5 questions × points per correct). Used for that stage's bucket. */
+export function getStageMaxScore(stage: 1 | 2 | 3): number {
+  if (stage === 1) return 5 * POINTS.stage1Correct;
+  if (stage === 2) return 5 * POINTS.stage2Correct;
+  return 5 * POINTS.stage3Correct;
+}
+
+/** Number of visual drops to animate for a given points + streak bonus. */
+export function getDropsCount(points: number, streakBonus: number): number {
+  const total = points + streakBonus;
+  if (total <= 0) return 0;
+  return Math.min(10, Math.max(1, Math.ceil(total / 50)));
+}
+
+/** Feedback auto-advance delay (ms): decreases as game progresses for faster pace. */
+export function getFeedbackDelayMs(questionIndex: number, stage: number): number {
+  const progress = questionIndex + (stage - 1) * 5;
+  return Math.max(2000, 4000 - progress * 350);
+}
+
+/** Points transition screen duration (ms): decreases as game progresses. */
+export function getPointsTransitionDurationMs(questionIndex: number, stage: number): number {
+  const progress = questionIndex + (stage - 1) * 5;
+  return Math.max(1200, 2300 - progress * 150);
+}
+
+/** Delay after bucket water rise before going to transition (ms). */
+export function getWaterRiseCompleteDelayMs(questionIndex: number, stage: number): number {
+  const progress = questionIndex + (stage - 1) * 5;
+  return Math.max(350, 650 - progress * 40);
 }
 
 export function useGame() {
@@ -121,22 +166,44 @@ export function useGame() {
     setState(s => ({ ...s, selectedOption: optionId }));
   };
 
-  const confirmAnswer = () => {
-    if (!state.selectedOption) return;
+  /** Returns true if game over was triggered (caller should not navigate to feedback). */
+  const confirmAnswer = (): boolean => {
+    if (!state.selectedOption) return false;
     const question = getCurrentQuestion();
-    if (!question) return;
+    if (!question) return false;
 
     const isCorrect = state.selectedOption === question.correct;
     const newStreak = isCorrect ? state.streak + 1 : 0;
-    
+    const newLives = isCorrect ? state.lives : state.lives - 1;
+
+    if (!isCorrect && newLives < 0) {
+      // Second error: game over. Add this wrong answer to stageAnswers and go to game-over screen.
+      setState(s => ({
+        ...s,
+        isAnswered: true,
+        lastAnswerCorrect: false,
+        lastPointsEarned: 0,
+        lastStreakBonus: 0,
+        streak: 0,
+        lives: 0,
+        stageAnswers: [...s.stageAnswers, false],
+        screen: 'game-over',
+      }));
+      return true;
+    }
+
     let points = 0;
     let streakBonus = 0;
     if (isCorrect) {
       points = state.stage === 1 ? POINTS.stage1Correct : state.stage === 2 ? POINTS.stage2Correct : POINTS.stage3Correct;
+      if (state.eliminatedOptionForRetry) {
+        points = Math.floor(points / 2);
+      }
       if (newStreak >= 5) streakBonus = POINTS.streak5Bonus;
       else if (newStreak >= 3) streakBonus = POINTS.streak3Bonus;
     }
 
+    const pointsEarned = points + streakBonus;
     setState(s => ({
       ...s,
       isAnswered: true,
@@ -144,9 +211,13 @@ export function useGame() {
       lastPointsEarned: points,
       lastStreakBonus: streakBonus,
       streak: newStreak,
-      score: s.score + points + streakBonus,
+      lives: newLives,
+      eliminatedOptionForRetry: null,
+      score: s.score + pointsEarned,
+      stageScore: isCorrect ? s.stageScore + pointsEarned : s.stageScore,
       stageAnswers: [...s.stageAnswers, isCorrect],
     }));
+    return false;
   };
 
   const goToFeedback = () => setScreen('feedback');
@@ -155,6 +226,10 @@ export function useGame() {
     const { questionIndex, stageAnswers, stage, sealsEarned, profile } = state;
 
     if (questionIndex >= 4) {
+      // Só finaliza a etapa se já temos 5 respostas (evita finalizar após recuperar vida na pergunta 5)
+      if (stageAnswers.length < 5) {
+        return;
+      }
       // End of stage
       const correctCount = stageAnswers.filter(Boolean).length;
       const passed = correctCount >= 4;
@@ -188,8 +263,11 @@ export function useGame() {
         ...s,
         questionIndex: 0,
         stageAnswers: [],
+        stageScore: 0,
         selectedOption: null,
         isAnswered: false,
+        lives: 1,
+        eliminatedOptionForRetry: null,
         screen: 'question',
       }));
       return;
@@ -214,14 +292,64 @@ export function useGame() {
       stage: (s.stage + 1) as 1 | 2 | 3,
       questionIndex: 0,
       stageAnswers: [],
+      stageScore: 0,
       selectedOption: null,
       isAnswered: false,
+      lives: 1,
+      eliminatedOptionForRetry: null,
       screen: 'question',
     }));
   };
 
+  const recoverLifeAndRetryQuestion = () => {
+    setState(s => {
+      const newStageAnswers = s.stageAnswers.slice(0, -1);
+      return {
+        ...s,
+        lives: 1,
+        selectedOption: null,
+        isAnswered: false,
+        stageAnswers: newStageAnswers,
+        eliminatedOptionForRetry: s.selectedOption,
+        screen: 'question',
+        // Manter o mesmo questionIndex (voltar para a mesma pergunta, inclusive a 5)
+        questionIndex: s.questionIndex,
+      };
+    });
+  };
+
+  const giveUpFromGameOver = () => {
+    setState(s => {
+      // Pad stageAnswers to 5 so StageResultScreen shows full result (game over = failed stage)
+      const padded = [...s.stageAnswers];
+      while (padded.length < 5) padded.push(false);
+      const stageAnswersForResult = padded.slice(0, 5);
+      return {
+        ...s,
+        screen: 'stage-result',
+        stageAnswers: stageAnswersForResult,
+        allStageResults: [...s.allStageResults, stageAnswersForResult],
+        selectedOption: null,
+        isAnswered: false,
+      };
+    });
+  };
+
+  /** Reinicia o jogo para uma nova pessoa — volta ao cadastro. */
   const restartGame = () =>
-    setState({ ...initialState, screen: 'cadastro', guestName: '', guestEmail: '', guestPhone: '', profile: null });
+    setState({ ...initialState, screen: 'cadastro', guestName: '', guestEmail: '', guestPhone: '', profile: null, stageScore: 0 });
+
+  /** Reinicia o jogo mantendo o mesmo usuário — volta às regras para jogar de novo. */
+  const restartSameGuest = () =>
+    setState(s => ({
+      ...initialState,
+      screen: 'rules',
+      guestName: s.guestName,
+      guestEmail: s.guestEmail,
+      guestPhone: s.guestPhone,
+      profile: s.profile,
+      stageScore: 0,
+    }));
 
   const getStageName = (stage: number) => {
     if (stage === 1) return 'Base Comum';
@@ -249,7 +377,10 @@ export function useGame() {
     nextQuestion,
     advanceStage,
     continueAfterAchievement,
+    recoverLifeAndRetryQuestion,
+    giveUpFromGameOver,
     restartGame,
+    restartSameGuest,
     getStageName,
   };
 }

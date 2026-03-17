@@ -7,7 +7,10 @@ interface FinalScreenProps {
   sealsEarned: string[];
   profile: Profile;
   guestName?: string;
-  onRestart: () => void;
+  /** Jogar novamente com o mesmo usuário (volta às regras). */
+  onRestartSameGuest: () => void;
+  /** Voltar ao início para cadastrar uma nova pessoa. */
+  onRestartNewPerson: () => void;
 }
 
 const levelConfig = {
@@ -17,7 +20,7 @@ const levelConfig = {
   diamante: { gradient: ['#B9F2FF', '#4FC3F7'], label: 'Diamante' },
 };
 
-const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onRestart }: FinalScreenProps) => {
+const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onRestartSameGuest, onRestartNewPerson }: FinalScreenProps) => {
   const level = getFinalLevel(score, usedHint);
   const config = levelConfig[level];
 
@@ -68,7 +71,7 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
           </defs>
           <circle cx="50" cy="50" r="45" fill="url(#final-seal)" />
           <path
-            d="M50 25C50 25 38 40 38 48C38 54.6 43.4 60 50 60C56.6 60 62 54.6 62 48C62 40 50 25 50 25Z"
+            d="M50 32.5C50 32.5 38 47.5 38 55.5C38 62.1 43.4 67.5 50 67.5C56.6 67.5 62 62.1 62 55.5C62 47.5 50 32.5 50 32.5Z"
             fill="rgba(255,255,255,0.8)"
           />
         </svg>
@@ -96,7 +99,7 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
               </defs>
               <circle cx="40" cy="40" r="35" fill={`url(#mini-seal-${stage})`} />
               <path
-                d="M40 22C40 22 32 34 32 39C32 43.4 35.6 47 40 47C44.4 47 48 43.4 48 39C48 34 40 22 40 22Z"
+                d="M40 27.5C40 27.5 32 39.5 32 44.5C32 48.9 35.6 52.5 40 52.5C44.4 52.5 48 48.9 48 44.5C48 39.5 40 27.5 40 27.5Z"
                 fill="rgba(255,255,255,0.8)"
               />
             </svg>
@@ -193,23 +196,41 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
         A água é um bem de todos. Sua gestão responsável começa pelo conhecimento.
       </motion.p>
 
-      {/* Restart */}
-      <motion.button
-        className="w-full font-lato text-azul-claro rounded-xl mt-8 mb-4"
-        style={{
-          height: '60px',
-          fontSize: '20px',
-          background: 'rgba(255,255,255,0.10)',
-          border: '1px solid #85C1D4',
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.8 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onRestart}
-      >
-        JOGAR NOVAMENTE
-      </motion.button>
+      {/* Opções: mesmo usuário ou nova pessoa */}
+      <div className="w-full mt-8 flex flex-col gap-3">
+        <motion.button
+          className="w-full font-lato font-semibold text-branco-nevoa rounded-xl"
+          style={{
+            height: '56px',
+            fontSize: '20px',
+            background: 'rgba(133,193,212,0.25)',
+            border: '2px solid #85C1D4',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.8 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onRestartSameGuest}
+        >
+          Tentar novamente (mesmo usuário)
+        </motion.button>
+        <motion.button
+          className="w-full font-lato text-azul-claro rounded-xl"
+          style={{
+            height: '56px',
+            fontSize: '20px',
+            background: 'rgba(255,255,255,0.10)',
+            border: '1px solid #85C1D4',
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.9 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onRestartNewPerson}
+        >
+          Voltar ao início (nova pessoa)
+        </motion.button>
+      </div>
     </motion.div>
   );
 };

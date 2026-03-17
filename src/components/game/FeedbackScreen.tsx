@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Profile } from '@/hooks/useGame';
+import { Profile, getFeedbackDelayMs } from '@/hooks/useGame';
 import { Question } from '@/data/questions';
 
 interface FeedbackScreenProps {
@@ -7,32 +8,58 @@ interface FeedbackScreenProps {
   pointsEarned: number;
   streakBonus: number;
   streak: number;
+  score: number;
+  questionIndex: number;
+  stage: number;
   question: Question;
   selectedOption: string;
   profile: Profile;
   isLastQuestion: boolean;
+  lives?: number;
   onNext: () => void;
 }
 
-const profileColors: Record<Profile, string> = {
-  agricultura: '#3B6D11',
-  industria: '#1A6B9A',
-  abastecimento: '#BA7517',
-};
-
 const FeedbackScreen = ({
   isCorrect,
-  pointsEarned,
   streakBonus,
   streak,
+  questionIndex,
+  stage,
   question,
   selectedOption,
   profile,
-  isLastQuestion,
   onNext,
 }: FeedbackScreenProps) => {
-  const themeColor = profileColors[profile];
   const correctOption = question.options.find(o => o.id === question.correct);
+  const delayMs = getFeedbackDelayMs(questionIndex, stage);
+  const [secondsLeft, setSecondsLeft] = useState(() => Math.ceil(delayMs / 1000));
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    timeoutRef.current = setTimeout(() => onNext(), delayMs);
+    intervalRef.current = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [onNext, delayMs]);
+
+  const handleSkip = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = null;
+    timeoutRef.current = null;
+    onNext();
+  };
 
   return (
     <motion.div
@@ -51,8 +78,8 @@ const FeedbackScreen = ({
         transition={{ duration: 0.3 }}
         style={{
           background: isCorrect
-            ? 'rgba(59,109,17,0.12)'
-            : 'rgba(153,60,29,0.10)',
+            ? 'rgba(59,109,17,0.22)'
+            : 'rgba(153,60,29,0.2)',
           pointerEvents: 'none',
           zIndex: 0,
         }}
@@ -67,13 +94,15 @@ const FeedbackScreen = ({
         >
           {isCorrect ? (
             <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="36" fill="#3B6D11" opacity="0.3" />
-              <path d="M25 40L35 50L55 30" stroke="#3B6D11" strokeWidth="4" fill="none" strokeLinecap="round" />
+              <circle cx="40" cy="40" r="36" fill="#3B6D11" opacity="0.6" />
+              <circle cx="40" cy="40" r="36" fill="none" stroke="#5A9B2E" strokeWidth="2" opacity="0.8" />
+              <path d="M25 40L35 50L55 30" stroke="#fff" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           ) : (
             <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="36" fill="#993C1D" opacity="0.3" />
-              <path d="M28 28L52 52M52 28L28 52" stroke="#993C1D" strokeWidth="4" strokeLinecap="round" />
+              <circle cx="40" cy="40" r="36" fill="#993C1D" opacity="0.6" />
+              <circle cx="40" cy="40" r="36" fill="none" stroke="#B84A2A" strokeWidth="2" opacity="0.8" />
+              <path d="M28 28L52 52M52 28L28 52" stroke="#fff" strokeWidth="5" strokeLinecap="round" />
             </svg>
           )}
         </motion.div>
@@ -89,29 +118,20 @@ const FeedbackScreen = ({
           {isCorrect ? 'Resposta correta!' : 'Não foi dessa vez'}
         </h2>
 
-        {/* Points */}
-        {isCorrect && (
-          <motion.div
-            className="font-montserrat font-bold text-amber-ipe mt-4 tabular-nums"
-            style={{ fontSize: '48px' }}
+        {/* Streak message (points are shown as drops filling the bucket in question screen) */}
+        {isCorrect && streak > 0 && (
+          <motion.p
+            className="font-montserrat text-amber-ipe mt-4"
+            style={{ fontSize: '22px' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            +{pointsEarned} pts
-          </motion.div>
-        )}
-
-        {/* Streak bonus */}
-        {streakBonus > 0 && (
-          <motion.p
-            className="font-montserrat text-amber-ipe mt-2"
-            style={{ fontSize: '22px' }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            +{streakBonus} pts bônus! 🔥 {streak} acertos seguidos
+            {streakBonus > 0 ? (
+              <>Bônus! 🔥 {streak} acertos seguidos</>
+            ) : (
+              <>🔥 {streak} acertos seguidos</>
+            )}
           </motion.p>
         )}
 
@@ -162,18 +182,24 @@ const FeedbackScreen = ({
           </p>
         </div>
 
-        {/* Next button */}
-        <motion.button
-          className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-8"
-          style={{ height: '72px', fontSize: '22px', background: themeColor }}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onNext}
-        >
-          {isLastQuestion ? 'VER RESULTADO' : 'PRÓXIMA PERGUNTA'}
-        </motion.button>
+        <div className="flex flex-col items-center gap-3 mt-6">
+          <p className="font-lato text-azul-claro" style={{ fontSize: '22px' }}>
+            Próxima pergunta em <strong className="tabular-nums">{secondsLeft}</strong> s
+          </p>
+          <motion.button
+            type="button"
+            className="font-montserrat font-semibold text-branco-nevoa rounded-lg px-6 py-3"
+            style={{
+              fontSize: '18px',
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.35)',
+            }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleSkip}
+          >
+            Pular
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   );

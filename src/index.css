@@ -170,6 +170,27 @@
   100% { transform: translateY(-200px) scale(0.5); opacity: 0; }
 }
 
+/* Efeito água tranquilo para o card do troféu (regras) */
+@keyframes water-shine {
+  0%, 100% { opacity: 0.04; }
+  50% { opacity: 0.12; }
+}
+
+.rules-trophy-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse 140% 100% at 50% 50%,
+    rgba(133, 193, 212, 0.25) 0%,
+    rgba(42, 143, 173, 0.1) 50%,
+    transparent 75%
+  );
+  pointer-events: none;
+  animation: water-shine 6s ease-in-out infinite;
+}
+
 /* Utility classes */
 .animate-drift { animation: drift 12s ease-in-out infinite alternate; }
 .animate-float-up { animation: floatUp 8s ease-in-out infinite; }
@@ -183,6 +204,15 @@
 }
 .animate-pulse-glow { animation: pulse-glow 1.5s ease-in-out infinite; }
 .animate-wave { animation: wave 8s linear infinite; }
+
+/* Barra de progresso: hover com brilho/destaque */
+.progress-bar-wrap {
+  transition: filter 0.3s ease, box-shadow 0.3s ease;
+}
+.progress-bar-wrap:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 0 20px rgba(133, 193, 212, 0.25);
+}
 
 /* Glass card */
 .glass-card {
@@ -217,3 +247,14 @@ button, [role="button"] {
 /* Scrollbar hide */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Pin do mapa: remove fundo padrão do Leaflet para ícone customizado */
+.map-pin-icon {
+  background: none !important;
+  border: none !important;
+}
+
+/* Hover na malha municipal: cursor de seleção */
+.goias-municipality-layer {
+  cursor: pointer;
+}

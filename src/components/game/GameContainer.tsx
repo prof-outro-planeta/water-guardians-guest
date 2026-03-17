@@ -1,13 +1,15 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
+import { useGame, getStageMaxScore } from '@/hooks/useGame';
 import WaterBackground from './WaterBackground';
 import SplashScreen from './SplashScreen';
 import CadastroScreen from './CadastroScreen';
 import HomeScreen from './HomeScreen';
 import RulesScreen from './RulesScreen';
 import QuestionScreen from './QuestionScreen';
+import PointsTransitionScreen from './PointsTransitionScreen';
 import FeedbackScreen from './FeedbackScreen';
+import GameOverScreen from './GameOverScreen';
 import StageResultScreen from './StageResultScreen';
 import AchievementScreen from './AchievementScreen';
 import FinalScreen from './FinalScreen';
@@ -26,7 +28,10 @@ const GameContainer = () => {
     nextQuestion,
     advanceStage,
     continueAfterAchievement,
+    recoverLifeAndRetryQuestion,
+    giveUpFromGameOver,
     restartGame,
+    restartSameGuest,
     getStageName,
   } = useGame();
 
@@ -45,11 +50,17 @@ const GameContainer = () => {
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Handle answer confirmation → show states then go to feedback
+  // Handle answer confirmation: correct → drops animate then callback; wrong → go to feedback after delay
   const handleConfirm = useCallback(() => {
-    confirmAnswer();
-    setTimeout(() => goToFeedback(), 1500);
-  }, [confirmAnswer, goToFeedback]);
+    const isGameOver = confirmAnswer();
+    if (isGameOver) return;
+    const question = getCurrentQuestion();
+    const isCorrect = question != null && state.selectedOption === question.correct;
+    if (!isCorrect) {
+      setTimeout(() => goToFeedback(), 1500);
+    }
+    // If correct, QuestionScreen runs drop animation and calls onPointsAnimationComplete → points-transition → feedback
+  }, [confirmAnswer, goToFeedback, getCurrentQuestion, state.selectedOption]);
 
   const question = getCurrentQuestion();
 
@@ -90,13 +101,32 @@ const GameContainer = () => {
               stage={state.stage}
               questionIndex={state.questionIndex}
               score={state.score}
+              stageScore={state.stageScore}
+              stageMaxScore={getStageMaxScore(state.stage)}
               profile={state.profile}
+              lives={state.lives}
+              eliminatedOptionId={state.eliminatedOptionForRetry}
               selectedOption={state.selectedOption}
               isAnswered={state.isAnswered}
               stageName={getStageName(state.stage)}
               stageAnswers={state.stageAnswers}
+              lastPointsEarned={state.lastPointsEarned}
+              lastStreakBonus={state.lastStreakBonus}
+              lastAnswerCorrect={state.lastAnswerCorrect}
+              onPointsAnimationComplete={() => setScreen('points-transition')}
               onSelect={selectOption}
               onConfirm={handleConfirm}
+            />
+          )}
+
+          {state.screen === 'points-transition' && (
+            <PointsTransitionScreen
+              key="points-transition"
+              stageScore={state.stageScore}
+              stageMaxScore={getStageMaxScore(state.stage)}
+              stage={state.stage}
+              questionIndex={state.questionIndex}
+              onComplete={goToFeedback}
             />
           )}
 
@@ -107,11 +137,22 @@ const GameContainer = () => {
               pointsEarned={state.lastPointsEarned}
               streakBonus={state.lastStreakBonus}
               streak={state.streak}
+              score={state.score}
+              questionIndex={state.questionIndex}
+              stage={state.stage}
               question={question}
               selectedOption={state.selectedOption}
               profile={state.profile}
               isLastQuestion={state.questionIndex >= 4}
               onNext={nextQuestion}
+            />
+          )}
+
+          {state.screen === 'game-over' && (
+            <GameOverScreen
+              key="game-over"
+              onRecoverLife={recoverLifeAndRetryQuestion}
+              onGiveUp={giveUpFromGameOver}
             />
           )}
 
@@ -124,6 +165,7 @@ const GameContainer = () => {
               profile={state.profile}
               stageName={getStageName(state.stage)}
               onAdvance={advanceStage}
+              onRestartNewPerson={restartGame}
             />
           )}
 
@@ -144,7 +186,8 @@ const GameContainer = () => {
               sealsEarned={state.sealsEarned}
               profile={state.profile}
               guestName={state.guestName || undefined}
-              onRestart={restartGame}
+              onRestartSameGuest={restartSameGuest}
+              onRestartNewPerson={restartGame}
             />
           )}
         </AnimatePresence>

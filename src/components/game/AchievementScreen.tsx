@@ -30,25 +30,27 @@ const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProp
 
   return (
     <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center z-10"
+      className="absolute inset-0 flex flex-col items-center z-10"
       style={{ padding: '48px' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h2 className="font-playfair font-bold text-branco-nevoa text-center" style={{ fontSize: '36px' }}>
-        Conquista Desbloqueada!
-      </h2>
+      {/* Bloco central: título + selo + textos, centralizado verticalmente */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full">
+        <h2 className="font-playfair font-bold text-branco-nevoa text-center" style={{ fontSize: '36px' }}>
+          Conquista Desbloqueada!
+        </h2>
 
-      {/* Seal */}
-      <motion.div
-        className="relative mt-12 flex items-center justify-center"
-        style={{ width: '200px', height: '200px' }}
-        initial={{ scale: 0, rotate: -10 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
-      >
+        {/* Seal */}
+        <motion.div
+          className="relative mt-8 flex items-center justify-center"
+          style={{ width: '200px', height: '200px' }}
+          initial={{ scale: 0, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
+        >
         <svg width="200" height="200" viewBox="0 0 200 200">
           <defs>
             <linearGradient id={`seal-grad-${stage}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -69,23 +71,23 @@ const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProp
           <circle cx="100" cy="100" r="85" fill={`url(#seal-grad-${stage})`} />
           {/* Shimmer overlay */}
           <circle cx="100" cy="100" r="85" fill="url(#shimmer-grad)" opacity="0.3" />
-          {/* Water drop icon */}
+          {/* Water drop icon — centralizada no círculo (100, 100) */}
           <path
-            d="M100 55C100 55 80 80 80 95C80 106 89 115 100 115C111 115 120 106 120 95C120 80 100 55 100 55Z"
+            d="M100 70C100 70 80 95 80 110C80 121 89 130 100 130C111 130 120 121 120 110C120 95 100 70 100 70Z"
             fill={sealConfig.textColor}
             opacity="0.9"
           />
-          {/* Star for stage 1, Crown for stage 3 */}
+          {/* Star for stage 1, Crown for stage 3 — ajustados para acompanhar a gota centralizada */}
           {stage === 1 && (
             <path
-              d="M100 65L103 75L113 75L105 81L108 91L100 85L92 91L95 81L87 75L97 75Z"
+              d="M100 80L103 90L113 90L105 96L108 106L100 100L92 106L95 96L87 90L97 90Z"
               fill={sealConfig.gradient[1]}
               opacity="0.6"
             />
           )}
           {stage === 3 && (
             <path
-              d="M85 52L90 42L95 50L100 38L105 50L110 42L115 52Z"
+              d="M85 67L90 57L95 65L100 53L105 65L110 57L115 67Z"
               fill={sealConfig.textColor}
               opacity="0.8"
             />
@@ -122,6 +124,7 @@ const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProp
       >
         Você demonstrou conhecimento sobre a gestão dos recursos hídricos!
       </motion.p>
+      </div>
 
       {/* Celebration particles */}
       {[...Array(12)].map((_, i) => {
@@ -151,7 +154,7 @@ const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProp
       })}
 
       <motion.button
-        className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-auto"
+        className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-8"
         style={{
           height: '72px',
           fontSize: '22px',

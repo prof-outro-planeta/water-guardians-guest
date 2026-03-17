@@ -7,7 +7,10 @@ interface StageResultScreenProps {
   score: number;
   profile: Profile;
   stageName: string;
+  /** Avançar (se aprovado) ou tentar a mesma etapa de novo (mesmo usuário). */
   onAdvance: () => void;
+  /** Voltar ao início para cadastrar nova pessoa. Só exibido quando não passou (precisa de 4 acertos). */
+  onRestartNewPerson?: () => void;
 }
 
 const profileColors: Record<Profile, string> = {
@@ -23,6 +26,7 @@ const StageResultScreen = ({
   profile,
   stageName,
   onAdvance,
+  onRestartNewPerson,
 }: StageResultScreenProps) => {
   const themeColor = profileColors[profile];
   const correctCount = stageAnswers.filter(Boolean).length;
@@ -50,7 +54,7 @@ const StageResultScreen = ({
         {stageName}
       </p>
 
-      {/* Score circles */}
+      {/* Score circles — acerto (verde) e erro (vermelho) com boa leitura */}
       <div className="flex gap-4 mt-12">
         {stageAnswers.map((correct, i) => (
           <motion.div
@@ -59,10 +63,11 @@ const StageResultScreen = ({
             style={{
               width: '60px',
               height: '60px',
-              background: correct ? 'rgba(59,109,17,0.25)' : 'rgba(153,60,29,0.20)',
-              border: `2px solid ${correct ? '#3B6D11' : '#993C1D'}`,
-              fontSize: '24px',
-              color: correct ? '#3B6D11' : '#993C1D',
+              background: correct ? 'rgba(59,109,17,0.55)' : 'rgba(153,60,29,0.5)',
+              border: `3px solid ${correct ? '#3B6D11' : '#993C1D'}`,
+              fontSize: '26px',
+              color: '#fff',
+              boxShadow: correct ? '0 0 12px rgba(59,109,17,0.4)' : '0 0 12px rgba(153,60,29,0.35)',
             }}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -111,25 +116,62 @@ const StageResultScreen = ({
         )}
       </motion.div>
 
-      <motion.button
-        className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-auto"
-        style={{
-          height: '72px',
-          fontSize: '22px',
-          background: passed ? themeColor : '#993C1D',
-        }}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.6 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onAdvance}
-      >
-        {passed
-          ? stage < 3
-            ? `AVANÇAR PARA ETAPA ${stage + 1}`
-            : 'VER CONQUISTA'
-          : 'TENTAR NOVAMENTE'}
-      </motion.button>
+      {/* Botões: ao passar, só "Avançar"; ao não passar, "Tentar novamente" e "Reiniciar" */}
+      <div className="w-full mt-auto flex flex-col gap-3">
+        {passed ? (
+          <motion.button
+            className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl"
+            style={{
+              height: '72px',
+              fontSize: '22px',
+              background: themeColor,
+            }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.6 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onAdvance}
+          >
+            {stage < 3 ? `AVANÇAR PARA ETAPA ${stage + 1}` : 'VER CONQUISTA'}
+          </motion.button>
+        ) : (
+          <>
+            <motion.button
+              className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl"
+              style={{
+                height: '64px',
+                fontSize: '20px',
+                background: '#993C1D',
+              }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.6 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onAdvance}
+            >
+              Tentar novamente (mesmo usuário)
+            </motion.button>
+            {onRestartNewPerson && (
+              <motion.button
+                className="w-full font-lato text-azul-claro rounded-xl"
+                style={{
+                  height: '56px',
+                  fontSize: '18px',
+                  background: 'rgba(255,255,255,0.10)',
+                  border: '1px solid #85C1D4',
+                }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.7 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onRestartNewPerson}
+              >
+                Voltar ao início (nova pessoa)
+              </motion.button>
+            )}
+          </>
+        )}
+      </div>
     </motion.div>
   );
 };

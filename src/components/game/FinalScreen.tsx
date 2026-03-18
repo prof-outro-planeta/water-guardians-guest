@@ -7,9 +7,9 @@ interface FinalScreenProps {
   sealsEarned: string[];
   profile: Profile;
   guestName?: string;
-  /** Jogar novamente com o mesmo usuário (volta às regras). */
+  /** Jogar novamente (volta às regras). */
   onRestartSameGuest: () => void;
-  /** Voltar ao início para cadastrar uma nova pessoa. */
+  /** Voltar ao início (cadastro). */
   onRestartNewPerson: () => void;
 }
 
@@ -180,7 +180,7 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
           whileTap={{ scale: 0.95 }}
           onClick={onRestartSameGuest}
         >
-          Tentar novamente (mesmo usuário)
+          Tentar novamente
         </motion.button>
         <motion.button
           className="w-full font-lato text-azul-claro rounded-xl"
@@ -196,7 +196,7 @@ const FinalScreen = ({ score, usedHint, sealsEarned, profile, guestName, onResta
           whileTap={{ scale: 0.95 }}
           onClick={onRestartNewPerson}
         >
-          Voltar ao início (nova pessoa)
+          Voltar ao início
         </motion.button>
       </div>
     </motion.div>

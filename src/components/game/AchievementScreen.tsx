@@ -5,9 +5,11 @@ interface AchievementScreenProps {
   stage: number;
   profile: Profile;
   onContinue: () => void;
+  /** Voltar ao início (cadastro). */
+  onBackToStart: () => void;
 }
 
-const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProps) => {
+const AchievementScreen = ({ stage, profile, onContinue, onBackToStart }: AchievementScreenProps) => {
   const sealName = getSealName(stage, profile);
 
   const sealConfig = {
@@ -153,21 +155,40 @@ const AchievementScreen = ({ stage, profile, onContinue }: AchievementScreenProp
         );
       })}
 
-      <motion.button
-        className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl mt-8"
-        style={{
-          height: '72px',
-          fontSize: '22px',
-          background: sealConfig.gradient[0],
-        }}
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.5 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onContinue}
-      >
-        CONTINUAR
-      </motion.button>
+      <div className="w-full mt-8 flex flex-col gap-3">
+        <motion.button
+          className="w-full font-montserrat font-bold text-branco-nevoa rounded-xl"
+          style={{
+            height: '72px',
+            fontSize: '22px',
+            background: sealConfig.gradient[0],
+          }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onContinue}
+        >
+          CONTINUAR
+        </motion.button>
+
+        <motion.button
+          className="w-full font-lato text-azul-claro rounded-xl"
+          style={{
+            height: '56px',
+            fontSize: '18px',
+            background: 'rgba(255,255,255,0.10)',
+            border: '1px solid #85C1D4',
+          }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.6 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onBackToStart}
+        >
+          Voltar ao início
+        </motion.button>
+      </div>
     </motion.div>
   );
 };

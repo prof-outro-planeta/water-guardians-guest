@@ -174,6 +174,7 @@ const GameContainer = () => {
               stage={state.stage}
               profile={state.profile}
               onContinue={continueAfterAchievement}
+              onBackToStart={restartGame}
             />
           )}
 

@@ -25,6 +25,8 @@ export interface GameState {
   questionIndex: number;
   /** Stable randomized question order for the current stage (array of indices). */
   stageQuestionOrder: number[];
+  /** Incremented when the player retries the same stage; used to reshuffle options deterministically. */
+  stageAttempt: number;
   score: number;
   stageAnswers: boolean[];
   allStageResults: boolean[][];
@@ -63,6 +65,57 @@ function makeShuffledIndices(n: number): number[] {
   return arr;
 }
 
+function hashStringToSeed(str: string): number {
+  // FNV-1a 32-bit
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+function mulberry32(seed: number) {
+  return function () {
+    let t = (seed += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function makeSeededShuffledIndices(n: number, seedString: string): number[] {
+  const rng = mulberry32(hashStringToSeed(seedString));
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function shuffleAndRelabelOptions(question: Question, seedString: string): Question {
+  const order = makeSeededShuffledIndices(question.options.length, seedString);
+  const letters = ['A', 'B', 'C', 'D', 'E'] as const;
+
+  // Find which original option was correct (by old id), then track where it ends up.
+  const correctIdxOriginal = question.options.findIndex((o) => o.id === question.correct);
+  const correctIdxNew = order.findIndex((origIdx) => origIdx === correctIdxOriginal);
+  const newCorrect = letters[correctIdxNew] ?? question.correct;
+
+  const newOptions = order.map((origIdx, newIdx) => {
+    const orig = question.options[origIdx];
+    const id = letters[newIdx] ?? orig.id;
+    return { ...orig, id };
+  }) as Question['options'];
+
+  return {
+    ...question,
+    options: newOptions,
+    correct: newCorrect,
+  };
+}
+
 function getQuestionsFor(stage: 1 | 2 | 3, profile: Profile | null): Question[] {
   if (stage === 1) return gameData.stage1;
   if (!profile) return [];
@@ -79,6 +132,7 @@ const initialState: GameState = {
   stage: 1,
   questionIndex: 0,
   stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
+  stageAttempt: 0,
   score: 0,
   stageAnswers: [],
   allStageResults: [],
@@ -151,10 +205,14 @@ export function useGame() {
   const [state, setState] = useState<GameState>(initialState);
 
   const getCurrentQuestion = useCallback((): Question | null => {
-    const { stage, questionIndex, profile, stageQuestionOrder } = state;
+    const { stage, questionIndex, profile, stageQuestionOrder, stageAttempt } = state;
     const questions = getQuestionsFor(stage, profile);
     const orderedIndex = stageQuestionOrder[questionIndex] ?? questionIndex;
-    return questions[orderedIndex] || null;
+    const q = questions[orderedIndex] || null;
+    if (!q) return null;
+    // Deterministic shuffle so it doesn't change between re-renders, but changes on "retry stage".
+    const seed = `stage:${stage}|profile:${profile ?? 'none'}|attempt:${stageAttempt}|qid:${q.id}`;
+    return shuffleAndRelabelOptions(q, seed);
   }, [state]);
 
   const getStageQuestions = useCallback((): Question[] => {
@@ -276,6 +334,7 @@ export function useGame() {
         ...s,
         questionIndex: 0,
         stageQuestionOrder: makeShuffledIndices(getQuestionsFor(s.stage, s.profile).length),
+        stageAttempt: s.stageAttempt + 1,
         stageAnswers: [],
         stageScore: 0,
         selectedOption: null,
@@ -306,6 +365,7 @@ export function useGame() {
       stage: (s.stage + 1) as 1 | 2 | 3,
       questionIndex: 0,
       stageQuestionOrder: makeShuffledIndices(getQuestionsFor(((s.stage + 1) as 1 | 2 | 3), s.profile).length),
+      stageAttempt: 0,
       stageAnswers: [],
       stageScore: 0,
       selectedOption: null,
@@ -361,6 +421,7 @@ export function useGame() {
       profile: null,
       stageScore: 0,
       stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
+      stageAttempt: 0,
     });
 
   /** Reinicia o jogo mantendo o mesmo usuário — volta às regras para jogar de novo. */
@@ -375,6 +436,7 @@ export function useGame() {
       profile: s.profile,
       stageScore: 0,
       stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
+      stageAttempt: 0,
     }));
 
   const getStageName = (stage: number) => {

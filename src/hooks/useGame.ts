@@ -23,6 +23,8 @@ export interface GameState {
   profile: Profile | null;
   stage: 1 | 2 | 3;
   questionIndex: number;
+  /** Stable randomized question order for the current stage (array of indices). */
+  stageQuestionOrder: number[];
   score: number;
   stageAnswers: boolean[];
   allStageResults: boolean[][];
@@ -52,6 +54,22 @@ const POINTS = {
 /** Pontos máximos de referência para encher o balde na tela de transição (5 perguntas × 250 pts estágio 3). */
 export const MAX_SCORE_FOR_BUCKET = 5 * POINTS.stage3Correct;
 
+function makeShuffledIndices(n: number): number[] {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function getQuestionsFor(stage: 1 | 2 | 3, profile: Profile | null): Question[] {
+  if (stage === 1) return gameData.stage1;
+  if (!profile) return [];
+  if (stage === 2) return gameData.stage2[profile];
+  return gameData.stage3[profile];
+}
+
 const initialState: GameState = {
   screen: 'splash',
   guestName: '',
@@ -60,6 +78,7 @@ const initialState: GameState = {
   profile: null,
   stage: 1,
   questionIndex: 0,
+  stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
   score: 0,
   stageAnswers: [],
   allStageResults: [],
@@ -132,21 +151,15 @@ export function useGame() {
   const [state, setState] = useState<GameState>(initialState);
 
   const getCurrentQuestion = useCallback((): Question | null => {
-    const { stage, questionIndex, profile } = state;
-    if (stage === 1) return gameData.stage1[questionIndex] || null;
-    if (!profile) return null;
-    if (stage === 2) return gameData.stage2[profile][questionIndex] || null;
-    if (stage === 3) return gameData.stage3[profile][questionIndex] || null;
-    return null;
+    const { stage, questionIndex, profile, stageQuestionOrder } = state;
+    const questions = getQuestionsFor(stage, profile);
+    const orderedIndex = stageQuestionOrder[questionIndex] ?? questionIndex;
+    return questions[orderedIndex] || null;
   }, [state]);
 
   const getStageQuestions = useCallback((): Question[] => {
     const { stage, profile } = state;
-    if (stage === 1) return gameData.stage1;
-    if (!profile) return [];
-    if (stage === 2) return gameData.stage2[profile];
-    if (stage === 3) return gameData.stage3[profile];
-    return [];
+    return getQuestionsFor(stage, profile);
   }, [state]);
 
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }));
@@ -262,6 +275,7 @@ export function useGame() {
       setState(s => ({
         ...s,
         questionIndex: 0,
+        stageQuestionOrder: makeShuffledIndices(getQuestionsFor(s.stage, s.profile).length),
         stageAnswers: [],
         stageScore: 0,
         selectedOption: null,
@@ -291,6 +305,7 @@ export function useGame() {
       ...s,
       stage: (s.stage + 1) as 1 | 2 | 3,
       questionIndex: 0,
+      stageQuestionOrder: makeShuffledIndices(getQuestionsFor(((s.stage + 1) as 1 | 2 | 3), s.profile).length),
       stageAnswers: [],
       stageScore: 0,
       selectedOption: null,
@@ -337,11 +352,21 @@ export function useGame() {
 
   /** Reinicia o jogo para uma nova pessoa — volta ao cadastro. */
   const restartGame = () =>
-    setState({ ...initialState, screen: 'cadastro', guestName: '', guestEmail: '', guestPhone: '', profile: null, stageScore: 0 });
+    setState({
+      ...initialState,
+      screen: 'cadastro',
+      guestName: '',
+      guestEmail: '',
+      guestPhone: '',
+      profile: null,
+      stageScore: 0,
+      stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
+    });
 
   /** Reinicia o jogo mantendo o mesmo usuário — volta às regras para jogar de novo. */
   const restartSameGuest = () =>
     setState(s => ({
+      ...s,
       ...initialState,
       screen: 'rules',
       guestName: s.guestName,
@@ -349,6 +374,7 @@ export function useGame() {
       guestPhone: s.guestPhone,
       profile: s.profile,
       stageScore: 0,
+      stageQuestionOrder: makeShuffledIndices(gameData.stage1.length),
     }));
 
   const getStageName = (stage: number) => {
